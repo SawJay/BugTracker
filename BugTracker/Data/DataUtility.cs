@@ -26,7 +26,7 @@ public static class DataUtility
     public static string? GetConnectionString(IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection");
-        var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+        var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_PRIVATE_URL");
         return string.IsNullOrEmpty(databaseUrl) ? connectionString : BuildConnectionString(databaseUrl);
     }
 
