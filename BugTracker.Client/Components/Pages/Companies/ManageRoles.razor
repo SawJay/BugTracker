@@ -1,0 +1,63 @@
+﻿@page "/companies/manageroles"
+@using BugTracker.Client.Components.UI.Companies
+@using BugTracker.Client.Components.UI.Projects
+@using Microsoft.AspNetCore.Authorization
+@using BugTracker.Client.Services.Interfaces
+@using BugTracker.Client.Models
+@using BugTracker.Client.Helpers
+@using BugTracker.Client.Components.Pages
+@inject ICompanyDTOService CompanyService
+@rendermode InteractiveAuto
+@attribute [Authorize(Roles = "Admin")]
+
+@if (Company is not null)
+{
+
+    <PageTitle>Manage Roles</PageTitle>
+
+    <div class="container-fluid">
+
+        <div class="row p-3">
+            <div class="col-12 pt-2">
+                <h3>Manage Roles</h3>
+            </div>
+          
+                @foreach (UserDTO user in Members.Where(u => u.Id != userInfo!.UserId))
+                {
+                    <ManageRoleForm User="user" OnSubmit="UpdateComment" />
+                }
+            
+        </div>
+
+    </div>
+
+
+}
+
+@code {
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private UserInfo? userInfo;
+    private IEnumerable<ProjectDTO> projects = [];
+    private IEnumerable<UserDTO> Members = [];
+    public CompanyDTO? Company;
+    private UserDTO? User;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+        Company = await CompanyService.GetCompanyByIdAsync(userInfo!.CompanyId);
+        Members = await CompanyService.GetCompanyMembersAsync(userInfo!.CompanyId);
+    }
+
+    private async Task UpdateComment(UserDTO user)
+    {
+        await CompanyService.UpdateUserRoleAsync(user, userInfo!.UserId);
+
+        Company = await CompanyService.GetCompanyByIdAsync(userInfo!.CompanyId);
+        Members = await CompanyService.GetCompanyMembersAsync(userInfo!.CompanyId);
+    }
+
+}

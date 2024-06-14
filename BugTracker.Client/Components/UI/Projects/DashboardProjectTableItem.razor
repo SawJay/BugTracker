@@ -1,0 +1,34 @@
+﻿@using BugTracker.Client.Helpers
+@using BugTracker.Client.Models
+@using BugTracker.Client.Services.Interfaces
+
+@inject IProjectDTOService ProjectService
+
+
+@if (Project is not null)
+{
+    <tr>
+        <td> <a class="text-decoration-none" href="projects/@Project.Id">@Project.Name</a></td>
+        <td class="text-center">@Project.StartDate.ToString("g")</td>
+        <td class="text-center">@Project.EndDate.ToString("g")</td>
+        <td class="text-center">@ProjectManager?.FullName</td>
+    </tr>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public ProjectDTO? Project { get; set; }
+
+    [CascadingParameter]
+    public Task<AuthenticationState>? AuthStateTask { get; set; }
+    private UserInfo? userInfo;
+
+    private UserDTO? ProjectManager;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+        ProjectManager = await ProjectService.GetProjectManagerAsync(Project!.Id, userInfo!.CompanyId);
+    }
+}
+

@@ -1,0 +1,121 @@
+﻿@page "/companies/index"
+@using BugTracker.Client.Components.UI.Projects
+@using Microsoft.AspNetCore.Authorization
+@using BugTracker.Client.Services.Interfaces
+@using BugTracker.Client.Models
+@using BugTracker.Client.Helpers
+@using BugTracker.Client.Components.Pages
+@inject ICompanyDTOService CompanyService
+@inject ITicketDTOService TicketService
+@rendermode InteractiveAuto
+@attribute [Authorize]
+
+@if (Company is not null)
+{
+    <PageTitle>@Company.Name</PageTitle>
+
+    <div class="row">
+        <div class="col-lg-3 col-md-4 col-xs-12 justify-content-start align-items-center">
+            <h5 class="text-uppercase mb-0 mb-4 m-2">
+                Company Info
+            </h5>
+        </div>
+        <AuthorizeView Roles="Admin">
+            <div class="col-lg-9 col-md-8 col-xs-12 justify-content-end align-self-center d-flex">
+                <a class="btn btn-outline-danger justify-content-end" href="companies/edit/@Company.Id">Edit Company</a>
+            </div>
+        </AuthorizeView>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="row gx-2">
+                            <div class="col-12 card border-0 px-0">
+                                <img class="card-img-top" src="@Company.ImageURL" height="180" />
+                                <div class="card-body bg-transparent border-0">
+                                    <div class="d-flex align-items-center">
+                                        <h2 class="card-title">
+                                            @Company.Name
+                                        </h2>
+                                    </div>
+                                    <hr />
+                                    <p class="pt-5">@Company.Description</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @foreach (UserDTO user in Members)
+                    {
+                        <div class="col-md-6 card border-0 pt-5 bg-transparent">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4 text-center">
+                                        <a href="companies/index">
+                                            <img src="@user.ProfilePictureUrl" class="rounded-circle img-fluid" />
+                                        </a>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <small>@user.Role</small>
+                                        <h5 class="box-title m-b-0">@user.FullName</h5>
+                                        <small>@user.Email</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-4 pt-4">
+                <div class="card card-hover mt-4 bg-primary-subtle">
+                    <div class="p-2 rounded bg-primary-subtle text-center">
+                        <h1 class="fw-light text-primary">@Company.Projects.Count</h1>
+                        <h5 class="text-primary">Total Projects</h5>
+                    </div>
+                </div>
+                <div class="card card-hover mt-4 bg-warning-subtle">
+                    <div class="p-2 rounded bg-warning-subtle text-center">
+                        @if (Tickets is not null)
+                        {
+                            <h1 class="fw-light text-warning">@Tickets.Count()</h1>
+                            <h5 class="text-warning">Total Tickets</h5>
+                        }
+                    </div>
+                </div>
+                <div class="card card-hover mt-4 bg-success-subtle">
+                    <div class="p-2 rounded bg-success-subtle text-center">
+                        @if (Members is not null)
+                        {
+                            <h1 class="fw-light text-success">@Members.Count()</h1>
+                            <h5 class="text-success">Members</h5>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+
+@code {
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private UserInfo? userInfo;
+    private IEnumerable<ProjectDTO> projects = [];
+    private IEnumerable<UserDTO> Members = [];
+    private IEnumerable<TicketDTO> Tickets = [];
+    public CompanyDTO? Company;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+        Company = await CompanyService.GetCompanyByIdAsync(userInfo!.CompanyId);
+        Members = await CompanyService.GetCompanyMembersAsync(userInfo!.CompanyId);
+        Tickets = await TicketService.GetAllTicketsAsync(userInfo!.CompanyId);
+    }
+
+}

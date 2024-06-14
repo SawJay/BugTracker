@@ -1,0 +1,67 @@
+﻿@using BugTracker.Client.Helpers
+@using BugTracker.Client.Models
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+@if (Comment is not null)
+{
+    <EditForm Model="Comment" OnSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        <!-- Comment form -->
+        <div class="pt-2">
+            <h2 class="pb-2 pb-lg-3 pb-xl-2">Leave a comment</h2>
+            <div class="col-12">
+                <label class="form-label">Comment</label>
+                <InputText class="form-control" placeholder="Type your comment here..." required id="c-comment" @bind-Value="Comment.Content"></InputText>
+                <ValidationMessage For="() => Comment.Content" />
+                <div class="invalid-feedback">Please enter a comment message!</div>
+            </div>
+            <div class="col-12 pt-4">
+                <button class="btn btn-primary" type="submit">Post a comment</button>
+            </div>
+        </div>
+    </EditForm>
+}
+
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<TicketCommentDTO> OnSubmit { get; set; }
+
+    [Parameter, EditorRequired]
+    public int TicketId { get; set; }
+
+    private TicketCommentDTO? Comment = new TicketCommentDTO();
+    private UserInfo? userInfo;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            Comment!.TicketId = TicketId;
+
+            Comment.UserId = userInfo!.UserId;
+
+            await OnSubmit.InvokeAsync(Comment);
+
+            Comment.Content = "";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            throw;
+        }
+    }
+}
+

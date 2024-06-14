@@ -1,0 +1,123 @@
+﻿@page "/companies/edit/{id:int}"
+
+@using BugTracker.Client.Helpers
+@using Microsoft.AspNetCore.Authorization
+@using BugTracker.Client.Models
+@using BugTracker.Client.Services.Interfaces
+@using BugTracker.Client.Components
+@using SawyersCodeBlog.Helpers
+
+@inject ICompanyDTOService CompanyService
+@rendermode InteractiveAuto
+@attribute [Authorize(Roles = "Admin")]
+@inject NavigationManager Nav
+
+<PageTitle>Edit Company</PageTitle>
+
+@if (companyToEdit is not null)
+{
+
+<div class="container">
+    <h3>
+        Edit Company
+    </h3>
+
+    <EditForm Context="editCompany" Model="companyToEdit" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <div class="col-lg-4">
+            <div class="mb-2">
+                <label class="form-label">@companyToEdit.Name</label>
+                <InputText class="form-control" @bind-Value="companyToEdit.Name" placeholder="@companyToEdit.Name" />
+                <ValidationMessage For="() => companyToEdit.Name" />
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="mb-2">
+                <label class="form-label">@companyToEdit.Description</label>
+                <InputText class="form-control" @bind-Value="companyToEdit.Description" placeholder="@companyToEdit.Description" />
+                <ValidationMessage For="() => companyToEdit.Description" />
+            </div>
+        </div>
+        <div class="square-img-container">
+            <img src="@(string.IsNullOrEmpty(companyToEdit.ImageURL) ? ImageHelper.DefaultContactImage : companyToEdit.ImageURL)" class="square-img" height="100"/>
+        </div>
+        <div>
+            <InputFile OnChange="OnFileChange" class="form-control mt-2" accept=".png, .jpg, .jpeg, .svg" />
+            <span class="text-danger">
+                @imageError
+            </span>
+        </div>
+        <div class="col-12 text-end">
+            <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+    </EditForm>
+</div>
+
+}
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private UserInfo? userInfo;
+    private string? imageError;
+
+    private CompanyDTO companyToEdit = new CompanyDTO();
+
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        companyToEdit = (await CompanyService.GetCompanyByIdAsync(Id))!;
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            await CompanyService.UpdateCompanyAsync(companyToEdit, userInfo!.UserId);
+
+            Nav.NavigateTo("companies/index");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            throw;
+        }
+    }
+
+    private async Task OnFileChange(InputFileChangeEventArgs changeEvent)
+    {
+        imageError = null;
+
+        if (changeEvent.File is null)
+        {
+            companyToEdit.ImageURL = ImageHelper.DefaultContactImage;
+        }
+        else if (changeEvent.File.Size > ImageHelper.MaxFileSize)
+        {
+            imageError = "Images must be less than 5 mb.";
+        }
+        else
+        {
+            try
+            {
+                companyToEdit.ImageURL = await ImageHelper.GetDataUrl(changeEvent.File);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                imageError = "Could not read the selected file. Please select a different image.";
+            }
+        }
+    }
+
+
+}

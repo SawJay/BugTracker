@@ -1,0 +1,87 @@
+﻿@using BugTracker.Client.Helpers
+@using BugTracker.Client.Models
+@using BugTracker.Client.Services.Interfaces
+@inject ITicketDTOService TicketService
+@inject IProjectDTOService ProjectService
+
+<div class="card m-3">
+    <div class="card-body">
+        <div class="pt-2 pt-xl-5 col-12 col-md-8" id="comments">
+            @foreach (TicketCommentDTO comment in comments)
+            {
+                <CommentItem TicketId="TicketId" Comment="comment" OnDelete="DeleteComment" OnUpdate="UpdateComment" />
+            }
+            <AuthorizeView Context="Commentticket">
+                @if (Commentticket.User.IsInRole("Admin") || Commentticket.User.IsInRole("ProjectManager") && userInfo?.UserId == ProjectManager?.Id || userInfo?.UserId == Ticket?.DeveloperUserId || userInfo?.UserId == Ticket?.SubmitterUserId)
+                {
+                    <div class="col-12 border-0 border-rounded pt-3">
+                        <CommentForm TicketId="TicketId" OnSubmit="HandleSubmit" />
+                    </div>
+                }
+            </AuthorizeView>
+            <hr />
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public int TicketId { get; set; }
+
+    [Parameter, EditorRequired]
+    public TicketDTO? Ticket { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private UserInfo? userInfo;
+
+    private IEnumerable<TicketCommentDTO> comments = [];
+    private TicketCommentDTO? comment;
+    private UserDTO? ProjectManager;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+        comments = await TicketService.GetTicketCommentsAsync(TicketId, userInfo!.CompanyId);
+        ProjectManager = await ProjectService.GetProjectManagerAsync(Ticket!.ProjectId, userInfo!.CompanyId);
+    }
+
+    private async Task HandleSubmit(TicketCommentDTO comment)
+    {
+        try
+        {
+            await TicketService.AddCommentAsync(comment, userInfo!.CompanyId);
+
+            comments = await TicketService.GetTicketCommentsAsync(TicketId, userInfo!.CompanyId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            throw;
+        }
+    }
+
+    private async Task DeleteComment(int commentId)
+    {
+        try
+        {
+            // delete the comment
+            await TicketService.DeleteCommentAsync(commentId, userInfo!.CompanyId);
+
+            // update
+            comments = await TicketService.GetTicketCommentsAsync(TicketId, userInfo!.CompanyId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            throw;
+        }
+    }
+
+    private async Task UpdateComment(TicketCommentDTO updatedComment)
+    {
+        await TicketService.UpdateCommentAsync(updatedComment, userInfo!.CompanyId, userInfo.UserId);
+        comments = await TicketService.GetTicketCommentsAsync(TicketId, userInfo!.CompanyId);
+    }
+}

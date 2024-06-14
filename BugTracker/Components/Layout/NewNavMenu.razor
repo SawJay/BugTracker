@@ -1,0 +1,167 @@
+﻿@using BugTracker.Client.Models
+@using BugTracker.Client.Services.Interfaces
+@implements IDisposable
+
+@inject NavigationManager NavigationManager
+@inject ICompanyDTOService CompanyService
+
+<!-- Navbar -->
+<!-- Remove "fixed-top" class to make navigation bar scrollable with the page -->
+<header class="header navbar navbar-expand-lg bg-light shadow-sm shadow-dark-mode-none fixed-top">
+    <div class="container px-3">
+        <a href="/" class="navbar-brand pe-3">
+            <img src="/images/Your paragraph text (1).svg" width="47" alt="Bug Tracker">
+            BugTracker
+        </a>
+        <div id="navbarNav" class="offcanvas offcanvas-end">
+            <div class="offcanvas-header border-bottom">
+                <h5 class="offcanvas-title">Menu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <AuthorizeView Context="LoggedInNavMenu">
+                        <div class="nav-item">
+                            <NavLink class="nav-link" href="dashboard">
+                                <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Dashboard
+                            </NavLink>
+                        </div>
+                        <li class="nav-item dropdown">
+                            <NavLink href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Company</NavLink>
+                            <div class="dropdown-menu p-0">
+                                <div class="d-lg-flex">
+                                    <div class="mega-dropdown-column pt-lg-3 pb-lg-4" style="--si-mega-dropdown-column-width: 15rem;">
+                                        <ul class="list-unstyled mb-0">
+                                            <li><a href="companies/index" class="dropdown-item">Company Details</a></li>
+                                            <AuthorizeView Roles="Admin">
+                                                <li><a href="companies/manageroles" class="dropdown-item">Manage User Roles</a></li>
+                                            </AuthorizeView>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <NavLink href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Projects</NavLink>
+                            <div class="dropdown-menu">
+                                <div class="d-lg-flex pt-lg-3">
+                                    <div class="mega-dropdown-column">
+                                        <ul class="list-unstyled mb-3">
+                                            <AuthorizeView Roles="Submitter, Developer, ProjectManager">
+                                                <li><a href="projects/myprojects" class="dropdown-item py-1">My Projects</a></li>
+                                            </AuthorizeView>
+                                            <li><a href="projects/index" class="dropdown-item py-1">Current Projects</a></li>
+                                            <li><a href="projects/add" class="dropdown-item py-1">Add Project</a></li>
+                                            <AuthorizeView Roles="Admin">
+                                                <li><a href="projects/archived" class="dropdown-item py-1">Archived Projects</a></li>
+                                            </AuthorizeView>
+                                            <AuthorizeView Roles="ProjectManager">
+                                                <li><a href="projects/myarchivedprojects" class="dropdown-item py-1">My Archived Projects</a></li>
+                                            </AuthorizeView>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <NavLink href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-current="page">Tickets</NavLink>
+                            <ul class="dropdown-menu">
+                                <AuthorizeView Roles="Admin">
+                                    <li><a href="tickets/index" class="dropdown-item">Current Tickets</a></li>
+                                </AuthorizeView>
+                                <AuthorizeView Roles="Submitter, ProjectManager, Developer">
+                                    <li><a href="tickets/mytickets" class="dropdown-item">My Tickets</a></li>
+                                </AuthorizeView>
+                                <li><a href="tickets/add" class="dropdown-item">Create Tickets</a></li>
+                                <AuthorizeView Roles="Admin">
+                                    <li><a href="tickets/archived" class="dropdown-item">Archived Tickets</a></li>
+                                </AuthorizeView>
+                                <AuthorizeView Roles="ProjectManager">
+                                    <li><a href="tickets/myarchivedtickets" class="dropdown-item py-1">My Archived Tickets</a></li>
+                                </AuthorizeView>
+                            </ul>
+                        </li>
+                    </AuthorizeView>
+                    <AuthorizeView>
+                        <Authorized>
+                            <div class="nav-item px-3">
+                                <NavLink class="nav-link" href="Account/Manage">
+                                    <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
+                                </NavLink>
+                            </div>
+                            <div class="nav-item px-3 text-end ms-auto">
+                                <form action="Account/Logout" method="post">
+                                    <AntiforgeryToken />
+                                    <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                                    <button type="submit" class="nav-link">
+                                        <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </Authorized>
+                        <NotAuthorized>
+                            <div class="nav-item px-3">
+                                <NavLink class="nav-link" href="Account/Register">
+                                    <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
+                                </NavLink>
+                            </div>
+                            <div class="nav-item">
+                                <NavLink class="nav-link" href="Account/Login">
+                                    <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
+                                </NavLink>
+                            </div>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </ul>
+            </div>
+            <AuthorizeView>
+                <Authorized>
+                    <div class="offcanvas-header border-top">
+                        <form action="Account/Logout" method="post">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                            <button type="submit" class="nav-link">
+                                <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+                            </button>
+                        </form>
+                    </div>
+                </Authorized>
+                <NotAuthorized>
+                    <div class="offcanvas-header border-top">
+                        <form action="Account/Login">
+                            <NavLink class="nav-link" href="Account/Login">
+                                <i class="bx bx-log-in-circle" aria-hidden="true"></i> Login
+                            </NavLink>
+                        </form>
+                    </div>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+        <button type="button" class="navbar-toggler" data-bs-toggle="offcanvas" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</header>
+
+
+@code {
+    private string? currentUrl;
+    private CompanyDTO? Company;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

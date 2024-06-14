@@ -1,0 +1,168 @@
+﻿@page "/tickets/{id:int}"
+
+@using BugTracker.Client.Components.UI.Comments
+@using BugTracker.Client.Components.UI.Tickets
+@using BugTracker.Client.Helpers
+@using Microsoft.AspNetCore.Authorization
+@using BugTracker.Client.Models
+@using BugTracker.Client.Services.Interfaces
+@using BugTracker.Client.Components
+
+@inject ITicketDTOService TicketService
+@inject IProjectDTOService ProjectService
+@rendermode InteractiveWebAssembly
+@attribute [Authorize]
+@inject NavigationManager Nav
+
+@if (Ticket is not null)
+{
+    <PageTitle>@Ticket.Title</PageTitle>
+    <div class="container-fluid">
+        <div class="row pt-2">
+            <div class="col-lg-3 col-md-4 col-xs-12 justify-content-start align-items-center">
+                <h5 class="text-uppercase mb-0 pt-2">
+                    Ticket Details
+                </h5>
+            </div>
+            <AuthorizeView Roles="Admin">
+                <div class="col-lg-9 col-md-8 col-xs-12 justify-content-end align-self-center d-flex">
+                    <a class="btn btn-outline-danger justify-content-end" href="tickets/edit/@Ticket.Id">Edit Ticket</a>
+                </div>
+            </AuthorizeView>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12 col-md-8">
+                <div class="card border-0">
+                    <div class="card-body">
+                        <div class="container pb-3">
+                            <h3 class="small">
+                                <a href="projects/@Ticket.ProjectId">Project: @Ticket.Project?.Name</a>
+                            </h3>
+                            <h3>
+                                @Ticket.Title
+                            </h3>
+                            <h6>
+                                @Ticket.Description
+                            </h6>
+                        </div>
+                    </div>
+                </div>
+
+
+                <CommentArea Ticket="Ticket" TicketId="Ticket.Id" @rendermode="InteractiveAuto" />
+
+                <TicketAttachmentArea Ticket="Ticket" TicketId="Ticket.Id" @rendermode="InteractiveAuto" />
+
+            </div>
+            <div class="col-lg-4 pt-2">
+                <div class="card border-0">
+                    <div class="card-body">
+                        <h4 class="card-title mb-0">Additonal Info</h4>
+                    </div>
+                    <div class="card-body bg-info-subtle">
+                        <div class="row text-center">
+                            <div class="col-12 my-2 text-start">
+                                Priority: <span class="badge bg-warning">@Ticket.Priority</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body bg-warning-subtle">
+                        <div class="row text-center">
+                            <div class="col-12 my-2 text-start">
+                                Status: <span class="badge bg-warning">@Ticket.Status</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body bg-success-subtle">
+                        <div class="row text-center">
+                            <div class="col-12 my-2 text-start">
+                                Type: <span class="badge bg-warning">@Ticket.Type</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="pt-3">
+                            Date Entered:
+                        </h5>
+                        <span>
+                            @Ticket.Created.ToString("MM/dd/yyyy")
+                        </span>
+                        <h5 class="pt-3">
+                            Ticket Submitter
+                        </h5>
+                        <span class="pb-3">
+                            @Ticket.SubmitterUser?.FullName
+                        </span>
+                        <h5 class="pt-3">
+                            Ticket Developer
+                        </h5>
+                        <span class="pb-3">
+                            @Ticket.DeveloperUser?.FullName
+                        </span>
+                        <AuthorizeView Context="TicketDeveloperCon">
+                            @if (TicketDeveloperCon.User.IsInRole("Admin") || TicketDeveloperCon.User.IsInRole("ProjectManager") && userInfo?.UserId == ProjectManager?.Id)
+                            {
+                                <InputSelect class="form-select pt-2" @bind-Value="Ticket.DeveloperUserId">
+                                    <option value="">
+                                        Ticket Developer..
+                                    </option>
+                                    @if (projectMembers is not null)
+                                    {
+                                        @foreach (UserDTO user in projectMembers)
+                                        {
+                                            if (user.Role == Roles.Developer.ToString())
+                                            {
+                                                <option value="@user.Id">
+                                                    @user.FullName
+                                                </option>
+                                            }
+                                        }
+                                    }
+                                </InputSelect>
+                                <div class="col-12 ms-auto pt-3">
+                                    <button @onclick="AssignTicketDeveloper" class="btn btn-primary btn-sm">
+                                        Assign
+                                    </button>
+                                </div>
+                            }
+                        </AuthorizeView>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private UserInfo? userInfo;
+    private IEnumerable<UserDTO>? projectMembers;
+    private string? selectedTicketDeveloper;
+    private UserDTO? TicketDeveloper;
+    private UserDTO? ProjectManager;
+    private TicketDTO? Ticket;
+    private IEnumerable<TicketDTO> tickets = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+        Ticket = (await TicketService.GetTicketByIdAsync(Id, userInfo!.CompanyId))!;
+        projectMembers = await ProjectService.GetProjectMembersAsync(Ticket.ProjectId, userInfo!.CompanyId);
+        ProjectManager = await ProjectService.GetProjectManagerAsync(Id, userInfo!.CompanyId);
+    }
+
+    private async Task AssignTicketDeveloper()
+    {
+        await TicketService.UpdateTicketAsync(Ticket!, userInfo!.CompanyId, userInfo.UserId);
+        Ticket = (await TicketService.GetTicketByIdAsync(Id, userInfo!.CompanyId))!;
+    }
+
+}

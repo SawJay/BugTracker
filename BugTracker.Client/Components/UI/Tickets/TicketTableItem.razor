@@ -1,0 +1,56 @@
+﻿@using BugTracker.Client.Models
+
+
+@if (Ticket is not null)
+{
+    <tr>
+        <td>@Ticket.Id</td>
+        <td> <a href="tickets/@Ticket.Id">@Ticket.Title</a></td>
+        <td class="text-center">@Ticket.Project!.Name</td>
+        <td class="text-center">@Ticket.Priority</td>
+        <td class="text-center">@Ticket.Status</td>
+        @if (Ticket.IsArchived is false)
+        {
+            <td class="text-center">
+                <button class="btn btn-outline-danger" @onclick="HandleSubmit">
+                    Archive
+                </button>
+            </td>
+        }
+        else if (Ticket.IsArchived is true)
+        {
+            <td class="text-center">
+                <button class="btn btn-outline-success" @onclick="HandleSubmit">
+                    Restore
+                </button>
+            </td>
+        }
+        <td class="text-center">
+            <a class="btn btn-outline-warning" href="tickets/edit/@Ticket.Id">
+                Edit
+            </a>
+        </td>
+    </tr>
+}
+
+@* @foreach (UserDTO user in Project.Members)
+{
+    <span>
+        @user.FullName,
+    </span>
+} *@
+
+@code {
+    [Parameter, EditorRequired]
+    public TicketDTO? Ticket { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<int> OnSubmit { get; set; }
+
+
+
+    private async Task HandleSubmit()
+    {
+        await OnSubmit.InvokeAsync(Ticket!.Id);
+    }
+}

@@ -1,0 +1,149 @@
+﻿@using BugTracker.Client.Helpers
+@using BugTracker.Client.Models
+@using BugTracker.Client.Services.Interfaces
+@inject ITicketDTOService TicketService
+@inject IProjectDTOService ProjectService
+
+<div class="card m-3">
+    <div class="card-body">
+        <h2 class="pt-2">Attachments:</h2>
+        <div class="row">
+            <AuthorizeView Context="TicketAttachForm">
+                @if (TicketAttachForm.User.IsInRole("Admin") || TicketAttachForm.User.IsInRole("ProjectManager") && userInfo?.UserId == ProjectManager?.Id || userInfo?.UserId == Ticket?.DeveloperUserId || userInfo?.UserId == Ticket?.SubmitterUserId)
+                {
+                    <div class="col-12 col-md-6">
+                        <EditForm Model="newAttachment" OnSubmit="HandleSubmit" class="gap-1">
+                            @* OnChange will store the selected file in the newFile field *@
+                            <InputFile class="mb-2 form-control" OnChange="e => newFile = e.File" />
+                            <InputText @bind-Value="newAttachment.Description" class="form-control" placeholder="Description (optional)" />
+                            <button type="submit" class="btn btn-sm btn-primary mt-2">Upload</button>
+                        </EditForm>
+                    </div>
+                }
+            </AuthorizeView>
+        </div>
+        <div class="row pt-2">
+            <div class="col-12">
+                @if (Ticket is not null)
+                {
+                    @foreach (TicketAttachmentDTO attachment in Ticket.Attachments)
+                    {
+                        <div class="pt-2">
+                            <a href="@attachment.AttachmentUrl">
+                                @{
+                                    string? extension = Path.GetExtension(attachment.FileName)?.Trim('.') ?? "default";
+                                }
+                                <img src="@($"png/{extension}.png")" height="50" width="50" />
+                            </a>
+                            <AuthorizeView Context="DeleteAttach">
+                                @if (attachment?.User?.Id == userInfo?.UserId || DeleteAttach.User.IsInRole("Admin") || DeleteAttach.User.IsInRole("ProjectManager"))
+                                {
+                                    <span>Uploaded by @attachment?.User!.FullName (@attachment?.Created.ToString("g"))<button class="btn p-1" @onclick="() => DeleteAttachment(attachment!.Id)"><i class="bi bi-trash text-danger"></i></button></span>
+                                }
+                                else
+                                {
+                                    <span>Uploaded by @attachment?.User!.FullName (@attachment?.Created.ToString("g"))</span>
+                                }
+                            </AuthorizeView>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public int TicketId { get; set; }
+
+    [Parameter, EditorRequired]
+    public TicketDTO? Ticket { get; set; }
+
+    [CascadingParameter]
+    public Task<AuthenticationState>? AuthStateTask { get; set; }
+    private UserInfo? userInfo;
+
+    private IEnumerable<TicketAttachmentDTO> attachments = [];
+    private TicketAttachmentDTO newAttachment = new();
+    private IBrowserFile? newFile; // <- this is bound to the file input element
+    private UserDTO? ProjectManager;
+
+    [Parameter]
+    public EventCallback OnChange { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // get the current user's information
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+
+        // fill out the fields we know about already
+        newAttachment.UserId = userInfo!.UserId;
+        newAttachment.TicketId = TicketId;
+        newAttachment.Created = DateTime.Now;
+        ProjectManager = await ProjectService.GetProjectManagerAsync(Ticket!.ProjectId, userInfo!.CompanyId);
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (newFile is not null)
+        {
+            // get the byte[] and ContentType from the selected file
+            using var stream = newFile.OpenReadStream();
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+
+            byte[] fileData = ms.ToArray();
+            string fileType = newFile.ContentType;
+            newAttachment.FileName = newFile.Name;
+
+            try
+            {
+                // send the model and file data to the service
+                await TicketService.AddTicketAttachment(newAttachment,
+                                                        fileData,
+                                                        fileType,
+                                                        userInfo!.CompanyId);
+            }
+            catch (Exception ex)
+            {
+                // TODO: display an error message if, e.g. file is too big
+                // or there was an error uploading the file
+                Console.WriteLine(ex);
+            }
+
+            // reset the form after this was successful
+            newFile = null;
+            newAttachment = new()
+                {
+                    UserId = userInfo!.UserId,
+                    TicketId = TicketId,
+                    Created = DateTime.Now
+                };
+
+            // this can be replaced with however you want to update the page
+            // after a file was saved
+            await OnChange.InvokeAsync();
+
+            // update
+            Ticket = (await TicketService.GetTicketByIdAsync(TicketId, userInfo!.CompanyId))!;
+        }
+    }
+
+    private async Task DeleteAttachment(int attachmentId)
+    {
+        try
+        {
+            // delete the comment
+            await TicketService.DeleteTicketAttachment(attachmentId, userInfo!.CompanyId);
+
+            // update
+            Ticket = (await TicketService.GetTicketByIdAsync(TicketId, userInfo!.CompanyId))!;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            throw;
+        }
+    }
+}

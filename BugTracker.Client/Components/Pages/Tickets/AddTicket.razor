@@ -1,0 +1,232 @@
+﻿@page "/tickets/add"
+
+@using BugTracker.Client.Helpers
+@using Microsoft.AspNetCore.Authorization
+@using BugTracker.Client.Models
+@using BugTracker.Client.Services.Interfaces
+@using BugTracker.Client.Components
+
+@inject ITicketDTOService TicketService
+@inject IProjectDTOService ProjectService
+@rendermode InteractiveAuto
+@attribute [Authorize]
+
+<div class="container">
+    <div class="row mt-2 mb-4">
+        <div class="col-lg-3 col-md-4 col-xs-12 justify-content-start align-items-center">
+            <h3 class="text-uppercase mb-0 pt-2">
+                Add a Ticket
+            </h3>
+        </div>
+        <AuthorizeView>
+            @if (context.User.IsInRole("Admin"))
+            {
+                <div class="col-lg-9 col-md-8 col-xs-12 justify-content-end align-self-center d-flex">
+                    <a class="btn btn-outline-danger justify-content-end" href="tickets/index">Back to Tickets</a>
+                </div>
+            }
+            else
+            {
+                <div class="col-lg-9 col-md-8 col-xs-12 justify-content-end align-self-center d-flex">
+                    <a class="btn btn-outline-danger justify-content-end" href="tickets/mytickets">Back to Tickets</a>
+                </div>
+            }
+        </AuthorizeView>
+    </div>
+
+
+    <AuthorizeView Context="AddTicketView">
+        @if (AddTicketView.User.IsInRole("Admin"))
+        {
+            <EditForm Model="Ticket" OnSubmit="HandleSubmit">
+                <DataAnnotationsValidator />
+                <div class="col-lg-4">
+                    <div class="mb-2">
+                        <label class="form-label">Ticket Title</label>
+                        <InputText class="form-control" @bind-Value="Ticket.Title" />
+                        <ValidationMessage For="() => Ticket.Title" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Priority</label>
+                        <InputSelect class="form-select" @bind-Value="Ticket.Priority">
+                            <option value="">
+                                Priority..
+                            </option>
+                            @foreach (TicketPriority priority in Enum.GetValues(typeof(TicketPriority)))
+                            {
+                                <option value="@priority">
+                                    @priority.GetDisplayName()
+                                </option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => Ticket.Priority" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Project</label>
+                        <InputSelect class="form-select" @bind-Value="Ticket.ProjectId">
+                            <option value="">
+                                Project..
+                            </option>
+                            @foreach (ProjectDTO project in projects)
+                            {
+                                <option value="@project.Id">
+                                    @project.Name
+                                </option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => Ticket.Priority" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Type</label>
+                        <InputSelect class="form-select" @bind-Value="Ticket.Type">
+                            <option value="">
+                                Type....
+                            </option>
+                            @foreach (TicketType type in Enum.GetValues(typeof(TicketType)))
+                            {
+                                <option value="@type">
+                                    @type.GetDisplayName()
+                                </option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => Ticket.Priority" />
+                    </div>
+                </div>
+                <div class="col-lg-8 vstack gap-2">
+                    <div class="flex-fill vstack">
+                        <label class="form-label">Description</label>
+                        <InputText class="form-control" @bind-Value="Ticket.Description" rows="5" />
+                        <ValidationMessage For="() => Ticket.Description" />
+                    </div>
+                </div>
+                <div class="col-12 text-end">
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <InputCheckbox class="form-check-input" @bind-Value="Ticket.IsArchived" />
+                            Archive
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </EditForm>
+        }
+        else
+        {
+            <EditForm Model="Ticket" OnSubmit="HandleSubmit">
+                <DataAnnotationsValidator />
+                <div class="col-lg-4">
+                    <div class="mb-2">
+                        <label class="form-label">Ticket Title</label>
+                        <InputText class="form-control" @bind-Value="Ticket.Title" />
+                        <ValidationMessage For="() => Ticket.Title" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Priority</label>
+                        <InputSelect class="form-select" @bind-Value="Ticket.Priority">
+                            <option value="">
+                                Priority..
+                            </option>
+                            @foreach (TicketPriority priority in Enum.GetValues(typeof(TicketPriority)))
+                            {
+                                <option value="@priority">
+                                    @priority.GetDisplayName()
+                                </option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => Ticket.Priority" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Project</label>
+                        <InputSelect class="form-select" @bind-Value="Ticket.ProjectId">
+                            <option value="">
+                                Project..
+                            </option>
+                            @foreach (ProjectDTO project in memberProjects)
+                            {
+                                <option value="@project.Id">
+                                    @project.Name
+                                </option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => Ticket.Priority" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Type</label>
+                        <InputSelect class="form-select" @bind-Value="Ticket.Type">
+                            <option value="">
+                                Type....
+                            </option>
+                            @foreach (TicketType type in Enum.GetValues(typeof(TicketType)))
+                            {
+                                <option value="@type">
+                                    @type.GetDisplayName()
+                                </option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => Ticket.Priority" />
+                    </div>
+                </div>
+                <div class="col-lg-8 vstack gap-2">
+                    <div class="flex-fill vstack">
+                        <label class="form-label">Description</label>
+                        <InputText class="form-control" @bind-Value="Ticket.Description" rows="5" />
+                        <ValidationMessage For="() => Ticket.Description" />
+                    </div>
+                </div>
+                <div class="col-12 text-end">
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <InputCheckbox class="form-check-input" @bind-Value="Ticket.IsArchived" />
+                            Archive
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </EditForm>
+        }
+    </AuthorizeView>
+</div>
+
+
+
+@code {
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private UserInfo? userInfo;
+
+    private TicketDTO Ticket = new TicketDTO();
+    private IEnumerable<TicketDTO> tickets = [];
+    private IEnumerable<ProjectDTO> projects = [];
+    private IEnumerable<ProjectDTO> memberProjects = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+        projects = await ProjectService.GetAllProjectsAsync(userInfo!.CompanyId);
+        tickets = await TicketService.GetAllTicketsAsync(userInfo!.CompanyId);
+        memberProjects = await ProjectService.GetMemberProjectsAsync(userInfo.UserId, userInfo!.CompanyId);
+    }
+
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            // ticket.Submituser = userinfo
+            Ticket!.SubmitterUserId = userInfo!.UserId;
+
+            await TicketService.AddTicketAsync(Ticket, userInfo!.CompanyId);
+
+            Ticket = new TicketDTO();
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            throw;
+        }
+    }
+
+}

@@ -1,0 +1,31 @@
+﻿@using BugTracker.Client.Helpers
+@using BugTracker.Client.Models
+@using BugTracker.Client.Services.Interfaces
+
+@inject ICompanyDTOService CompanyService
+
+
+@if (Member is not null)
+{
+    <tr>
+        <td><img class="rounded-pill" src="@Member.ProfilePictureUrl"></td>
+        <td>@Member.FullName</td>
+        <td class="text-center">@Member.Role</td>
+    </tr>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public UserDTO? Member { get; set; }
+
+    [CascadingParameter]
+    public Task<AuthenticationState>? AuthStateTask { get; set; }
+    private UserInfo? userInfo;
+
+    private UserDTO? ProjectManager;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+    }
+}

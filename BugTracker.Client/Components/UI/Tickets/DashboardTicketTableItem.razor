@@ -1,0 +1,20 @@
+﻿@using BugTracker.Client.Models
+
+
+@if (Ticket is not null)
+{
+    <tr>
+        <td>@Ticket.Id</td>
+        <td> <a class="text-decoration-none" href="tickets/@Ticket.Id">@Ticket.Title</a></td>
+        <td class="text-center">@Ticket.Project!.Name</td>
+        <td class="text-center">@Ticket.Priority</td>
+        <td class="text-center">@Ticket.Status</td>
+        <td class="text-center">@Ticket?.DeveloperUser?.FullName</td>
+    </tr>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public TicketDTO? Ticket { get; set; }
+
+}

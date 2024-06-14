@@ -1,0 +1,135 @@
+﻿@page "/projects/add"
+
+@using BugTracker.Client.Helpers
+@using Microsoft.AspNetCore.Authorization
+@using BugTracker.Client.Models
+@using BugTracker.Client.Services.Interfaces
+@using BugTracker.Client.Components
+
+@inject IProjectDTOService ProjectService
+@inject NavigationManager Nav
+@rendermode InteractiveAuto
+@attribute [Authorize]
+
+<AuthorizeView Context="ProjectAddPage">
+    <Authorized>
+        @if (ProjectAddPage.User.IsInRole("Admin") || ProjectAddPage.User.IsInRole("ProjectManager"))
+        {
+            <div class="container">
+                <div class="row mt-2 mb-4">
+                    <div class="col-lg-3 col-md-4 col-xs-12 justify-content-start align-items-center">
+                        <h3 class="text-uppercase mb-0 pt-2">
+                            Add a Project
+                        </h3>
+                    </div>
+                    <div class="col-lg-9 col-md-8 col-xs-12 justify-content-end align-self-center d-flex">
+                        <a class="btn btn-danger justify-content-end" href="projects/myprojects">Back to Projects</a>
+                    </div>
+                </div>
+
+                <EditForm Model="Project" OnValidSubmit="HandleSubmit">
+                    <DataAnnotationsValidator />
+                    <div class="col-lg-4">
+                        <div class="mb-2">
+                            <label class="form-label">Project Name</label>
+                            <InputText class="form-control" @bind-Value="Project.Name" />
+                            <ValidationMessage For="() => Project.Name" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Priority</label>
+                            <InputSelect class="form-select" @bind-Value="Project.Priority">
+                                <option value="">
+                                    Priority..
+                                </option>
+                                @foreach (ProjectPriority priority in Enum.GetValues(typeof(ProjectPriority)))
+                                {
+                                    <option value="@priority">
+                                        @priority.GetDisplayName()
+                                    </option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="() => Project.Priority" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Start Date</label>
+                            <InputDate id="StartDate" class="form-control" @bind-Value="Project.StartDate" />
+                            <ValidationMessage For="() => Project.StartDate" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">End Date</label>
+                            <InputDate id="EndDate" class="form-control" @bind-Value="Project.EndDate" />
+                            <ValidationMessage For="() => Project.EndDate" />
+                        </div>
+                    </div>
+                    <div class="col-lg-8 vstack gap-2">
+                        <div class="flex-fill vstack">
+                            <label class="form-label">Description</label>
+                            <InputText class="form-control" @bind-Value="Project.Description" rows="5" />
+                            <ValidationMessage For="() => Project.Description" />
+                        </div>
+                    </div>
+                    <div class="col-12 text-end">
+                        <div class="form-check">
+                            <label class="form-check-label">
+                                <InputCheckbox class="form-check-input" @bind-Value="Project.IsArchived" />
+                                Archive
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </EditForm>
+            </div>
+        }
+        else
+        {
+            <h1 class="justify-content-center">You are not authorized to view this page.</h1>
+            <a class="justify-content-center btn btn-danger" href="companies/index">Back to home</a>
+        }
+
+    </Authorized>
+</AuthorizeView>
+
+
+
+@code {
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private UserInfo? userInfo;
+
+    private ProjectDTO Project = new ProjectDTO();
+    private IEnumerable<ProjectDTO> projects = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        Project.StartDate = DateTime.Today;
+        Project.EndDate = DateTime.Today.AddDays(7);
+
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+        projects = await ProjectService.GetAllProjectsAsync(userInfo!.CompanyId);
+    }
+
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            ProjectDTO project = await ProjectService.AddProjectAsync(Project, userInfo!.CompanyId, userInfo.UserId);
+
+            if (userInfo.Roles.Contains("ProjectManager"))
+            {
+                await ProjectService.AssignProjectManagerAsync(project.Id, userInfo.UserId, userInfo.UserId);
+            }
+
+            Nav.NavigateTo($"projects/{project.Id}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            throw;
+        }
+    }
+
+
+}

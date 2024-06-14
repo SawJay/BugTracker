@@ -1,0 +1,91 @@
+﻿@using BugTracker.Client.Helpers
+@using BugTracker.Client.Models
+@using BugTracker.Client.Services.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@inject ICompanyDTOService CompanyService
+
+@if (User is not null)
+{
+    <div class="col-12 col-md-6 g-2">
+        <div class="card">
+            <div class="card-body">
+
+                <EditForm Model="User" OnSubmit="HandleSubmit">
+                    <DataAnnotationsValidator />
+
+                    <!-- Role changer -->
+                    <div class="row pt-2">
+                        <div class="col-12 col-md-4 align-items-center">
+                            <figure class="figure">
+                                <img src="@User.ProfilePictureUrl" class="figure-img rounded-circle" alt="...">
+                                <figcaption class="figure-caption text-center">@User.FullName</figcaption>
+                            </figure>
+                        </div>
+                        <div class="col-12 col-md-8 pt-4">
+                            <div class="col-12">
+                                <InputSelect class="form-control" required @bind-Value="User.Role">
+                                    <option value="">
+                                        Roles..
+                                    </option>
+                                    <option value="@Roles.Developer">
+                                        @Roles.Developer
+                                    </option>
+                                    <option value="@Roles.ProjectManager">
+                                        @Roles.ProjectManager
+                                    </option>
+                                    <option value="@Roles.Submitter">
+                                        @Roles.Submitter
+                                    </option>
+                                    <option value="@Roles.Admin">
+                                        @Roles.Admin
+                                    </option>
+                                </InputSelect>
+                                <ValidationMessage For="() => User.Role" />
+                                <div class="invalid-feedback">Please select a role</div>
+                            </div>
+                            <div class="col-12 pt-4 d-flex justify-content-center">
+                                <button class="btn btn-info" type="submit">Assign Role</button>
+                            </div>
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+
+}
+
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<UserDTO> OnSubmit { get; set; }
+
+    [Parameter, EditorRequired]
+    public UserDTO? User { get; set; }
+
+
+    private UserInfo? userInfo;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            await OnSubmit.InvokeAsync(User);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+}
+

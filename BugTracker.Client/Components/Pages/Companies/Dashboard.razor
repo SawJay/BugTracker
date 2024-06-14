@@ -1,0 +1,175 @@
+﻿@page "/dashboard"
+@using BugTracker.Client.Components.UI.Companies
+@using BugTracker.Client.Components.UI.Projects
+@using BugTracker.Client.Components.UI.Tickets
+@using BugTracker.Client.Helpers
+@using BugTracker.Client.Models
+@using BugTracker.Client.Services.Interfaces
+@using Microsoft.AspNetCore.Authorization
+
+@inject ICompanyDTOService CompanyService
+@inject ITicketDTOService TicketService
+@inject IProjectDTOService ProjectService
+
+@attribute [Authorize]
+
+<div class="container">
+    <div class="row mt-2 mb-4">
+        <div class="col-lg-3 col-md-4 col-xs-12 justify-content-start align-items-center">
+            <h5 class="text-uppercase mb-0 pt-2">
+                Dashboard
+            </h5>
+        </div>
+        <div class="row">
+            <div class="card col-12 col-md-4 card-hover mt-4 bg-primary-subtle">
+                <div class="p-2 rounded bg-primary-subtle text-center">
+                    <a href="projects/index" class="text-decoration-none">
+                        <h1 class="fw-light text-primary">@Company?.Projects.Count</h1>
+                        <h5 class="text-primary">Total Projects</h5>
+                    </a>
+                </div>
+            </div>
+            <div class="card col-12 col-md-4 card-hover mt-4 bg-warning-subtle">
+                <div class="p-2 rounded bg-warning-subtle text-center">
+                    @if (Tickets is not null)
+                    {
+                        <a href="tickets/index" class="text-decoration-none">
+                            <h1 class="fw-light text-warning">@Tickets.Count()</h1>
+                            <h5 class="text-warning">Total Tickets</h5>
+                        </a>
+                    }
+                </div>
+            </div>
+            <div class="card col-12 col-md-4 card-hover mt-4 bg-success-subtle">
+                <div class="p-2 rounded bg-success-subtle text-center">
+                    @if (Members is not null)
+                    {
+                        <a href="companies/index" class="text-decoration-none">
+                            <h1 class="fw-light text-success">@Members.Count()</h1>
+                            <h5 class="text-success">Members</h5>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+     
+        <div class="row">
+            <div class="col-md-12 col-lg-4 d-flex align-items-stretch mt-5">
+                <div class="card w-100">
+                    <div class="card-body bg-success-subtle border-0">
+                        <h5 class="card-title">Members</h5>
+                        <div class="table-responsive px-4 py-3">
+                            <table class="table table-striped">
+                                <thead class="table">
+                                    <tr>
+                                        <th>Avatar</th>
+                                        <th>Name</th>
+                                        <th class="text-center">Role</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Members is not null)
+                                    {
+                                        @foreach (UserDTO member in Members)
+                                        {
+                                            <CompanyMemberTableItem Member="member" />
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12 col-lg-8 d-flex align-items-stretch mt-5">
+                <div class="card w-100">
+                    <div class="card-body bg-primary-subtle border-0">
+                        <h5 class="card-title">Projects</h5>
+                        <div class="table-responsive px-4 py-3">
+                            <table class="table table-striped">
+                                <thead class="table">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th class="text-center">Start Date</th>
+                                        <th class="text-center">End Date</th>
+                                        <th class="text-center">Project Manager</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Members is not null)
+                                    {
+                                        @foreach (ProjectDTO project in Projects.Take(6))
+                                        {
+                                            <DashboardProjectTableItem Project="project" />
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                            <a class="text-end fw-bold text-decoration-none" href="projects/index">Show More</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 d-flex align-items-stretch mt-5">
+            <div class="card w-100">
+                <div class="card-body bg-warning-subtle border-0">
+                    <h5 class="card-title">Tickets</h5>
+                    <div class="table-responsive px-4 py-3">
+                        <table class="table table-striped">
+                            <thead class="table">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th class="text-center">Project</th>
+                                    <th class="text-center">Priority</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-center">Developer</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Tickets is not null)
+                                {
+                                    @foreach (TicketDTO ticket in Tickets.Take(6))
+                                    {
+                                        <DashboardTicketTableItem Ticket="ticket" />
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                        <a class="text-end fw-bold text-decoration-none" href="tickets/index">Show More</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private UserInfo? userInfo;
+    private IEnumerable<UserDTO> Members = [];
+    private IEnumerable<TicketDTO> Tickets = [];
+    private IEnumerable<ProjectDTO> Projects = [];
+    public CompanyDTO? Company;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (userInfo is not null)
+        {
+            Company = await CompanyService.GetCompanyByIdAsync(userInfo.CompanyId);
+            Members = await CompanyService.GetCompanyMembersAsync(userInfo.CompanyId);
+            Tickets = await TicketService.GetAllTicketsAsync(userInfo.CompanyId);
+            Projects = await ProjectService.GetAllProjectsAsync(userInfo.CompanyId);
+        }
+    }
+}

@@ -1,0 +1,124 @@
+﻿@page "/projects/edit/{id:int}"
+
+@using BugTracker.Client.Helpers
+@using Microsoft.AspNetCore.Authorization
+@using BugTracker.Client.Models
+@using BugTracker.Client.Services.Interfaces
+@using BugTracker.Client.Components
+
+@inject IProjectDTOService ProjectService
+@rendermode InteractiveAuto
+@attribute [Authorize]
+@inject NavigationManager Nav
+
+<PageTitle>Edit Project</PageTitle>
+
+<AuthorizeView Context="ProjectEditPage">
+    <Authorized>
+        @if (ProjectEditPage.User.IsInRole("Admin") || ProjectEditPage.User.IsInRole("ProjectManager") && userInfo?.UserId == ProjectManager?.Id)
+        {
+            <div class="container">
+                <h3>
+                    Edit Project
+                </h3>
+
+                <EditForm Model="projectToEdit" OnValidSubmit="HandleSubmit">
+                    <DataAnnotationsValidator />
+                    <div class="col-lg-4">
+                        <div class="mb-2">
+                            <label class="form-label">projectToEdit Name</label>
+                            <InputText class="form-control" @bind-Value="projectToEdit.Name" placeholder="@projectToEdit.Name" />
+                            <ValidationMessage For="() => projectToEdit.Name" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Priority</label>
+                            <InputSelect class="form-select" @bind-Value="projectToEdit.Priority" placeholder="@projectToEdit.Priority">
+                                <option value="">
+                                    Priority..
+                                </option>
+                                @foreach (ProjectPriority priority in Enum.GetValues(typeof(ProjectPriority)))
+                                {
+                                    <option value="@priority">
+                                        @priority.GetDisplayName()
+                                    </option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="() => projectToEdit.Priority" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Start Date</label>
+                            <InputDate id="StartDate" class="form-control" @bind-Value="projectToEdit.StartDate" />
+                            <ValidationMessage For="() => projectToEdit.StartDate" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">End Date</label>
+                            <InputDate id="EndDate" class="form-control" @bind-Value="projectToEdit.EndDate" />
+                            <ValidationMessage For="() => projectToEdit.EndDate" />
+                        </div>
+                    </div>
+                    <div class="col-lg-8 vstack gap-2">
+                        <div class="flex-fill vstack">
+                            <label class="form-label">Description</label>
+                            <InputText class="form-control" @bind-Value="projectToEdit.Description" rows="5" placeholder="@projectToEdit.Description" />
+                            <ValidationMessage For="() => projectToEdit.Description" />
+                        </div>
+                    </div>
+                    <div class="col-12 text-end">
+                        <div class="form-check">
+                            <label class="form-check-label">
+                                <InputCheckbox class="form-check-input" @bind-Value="projectToEdit.IsArchived" />
+                                Archive
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </EditForm>
+            </div>
+        }
+        else
+        {
+            <h1 class="justify-content-center">You are not authorized to view this page.</h1>
+            <a class="justify-content-center btn btn-danger" href="companies/index">Back to home</a>
+        }
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private UserInfo? userInfo;
+
+    private ProjectDTO projectToEdit = new ProjectDTO();
+    private IEnumerable<ProjectDTO> projects = [];
+    private UserDTO? ProjectManager;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await UserInfoHelper.GetUserInfoAsync(AuthStateTask);
+        projectToEdit = (await ProjectService.GetProjectByIdAsync(Id, userInfo!.CompanyId))!;
+        ProjectManager = await ProjectService.GetProjectManagerAsync(Id, userInfo!.CompanyId);
+    }
+
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            await ProjectService.UpdateProjectAsync(projectToEdit, userInfo!.CompanyId);
+
+            Nav.NavigateTo("projects/index");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            throw;
+        }
+    }
+
+
+}
+
