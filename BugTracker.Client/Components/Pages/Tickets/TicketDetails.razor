@@ -25,12 +25,12 @@
                 </h5>
             </div>
             <AuthorizeView Roles="Admin">
-                <div class="col-lg-9 col-md-8 col-xs-12 justify-content-end align-self-center d-flex">
+                <div class="col-lg-9 col-md-8 col-xs-12 pb-2 pb-md-0 justify-content-md-end align-self-center d-flex">
                     <a class="btn btn-outline-danger justify-content-end" href="tickets/edit/@Ticket.Id">Edit Ticket</a>
                 </div>
             </AuthorizeView>
         </div>
-        
+
         <div class="row mt-4">
             <div class="col-12 col-md-8">
                 <div class="card border-0">
@@ -42,47 +42,54 @@
                             <h3>
                                 @Ticket.Title
                             </h3>
-                            <h6>
+                            <p>
                                 @Ticket.Description
-                            </h6>
+                            </p>
                         </div>
                     </div>
                 </div>
 
+                <div class="ms-3">
+                    <CommentArea Ticket="Ticket" TicketId="Ticket.Id" @rendermode="InteractiveAuto" />
+                </div>
 
-                <CommentArea Ticket="Ticket" TicketId="Ticket.Id" @rendermode="InteractiveAuto" />
-
-                <TicketAttachmentArea Ticket="Ticket" TicketId="Ticket.Id" @rendermode="InteractiveAuto" />
-
+                <div class="ms-3">
+                    <TicketAttachmentArea Ticket="Ticket" TicketId="Ticket.Id" @rendermode="InteractiveAuto" />
+                </div>
             </div>
             <div class="col-lg-4 pt-2">
                 <div class="card border-0">
                     <div class="card-body">
                         <h4 class="card-title mb-0">Additonal Info</h4>
-                    </div>
-                    <div class="card-body bg-info-subtle">
+                        <hr class="pb-2 mt-1" />
                         <div class="row text-center">
                             <div class="col-12 my-2 text-start">
-                                Priority: <span class="badge bg-warning">@Ticket.Priority</span>
+                                <span class="fw-bold">Priority:</span> <span class="badge bg-faded-primary text-primary">@Ticket.Priority</span>
+                            </div>
+                            <div class="col-12 my-2 text-start">
+                                <span class="fw-bold">Status:</span> <span class="badge bg-faded-primary text-primary">@Ticket.Status</span>
+                            </div>
+                            <div class="col-12 my-2 text-start">
+                                <span class="fw-bold">Type:</span> <span class="badge bg-faded-primary text-primary">@Ticket.Type</span>
                             </div>
                         </div>
                     </div>
-                    <div class="card-body bg-warning-subtle">
-                        <div class="row text-center">
-                            <div class="col-12 my-2 text-start">
-                                Status: <span class="badge bg-warning">@Ticket.Status</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-body bg-success-subtle">
-                        <div class="row text-center">
-                            <div class="col-12 my-2 text-start">
-                                Type: <span class="badge bg-warning">@Ticket.Type</span>
-                            </div>
-                        </div>
-                    </div>
+                    @* <div class="card-body bg-primary-subtle">
+                <div class="row text-center">
+                <div class="col-12 my-2 text-start">
+                Status: <span class="badge bg-warning">@Ticket.Status</span>
+                </div>
+                </div>
+                </div>
+                <div class="card-body bg-primary-subtle">
+                <div class="row text-center">
+                <div class="col-12 my-2 text-start">
+                Type: <span class="badge bg-warning">@Ticket.Type</span>
+                </div>
+                </div>
+                </div> *@
                     <div class="card-body">
-                        <h5 class="pt-3">
+                        <h5 class="pt-1">
                             Date Entered:
                         </h5>
                         <span>

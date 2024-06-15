@@ -10,14 +10,14 @@
 
         <!-- Comment form -->
         <div class="pt-2">
-            <h2 class="pb-2 pb-lg-3 pb-xl-2">Leave a comment</h2>
+            <h4 class="pb-1">Leave a comment</h4>
             <div class="col-12">
                 <label class="form-label">Comment</label>
                 <InputText class="form-control" placeholder="Type your comment here..." required id="c-comment" @bind-Value="Comment.Content"></InputText>
                 <ValidationMessage For="() => Comment.Content" />
                 <div class="invalid-feedback">Please enter a comment message!</div>
             </div>
-            <div class="col-12 pt-4">
+            <div class="col-12 pb-2 pt-4">
                 <button class="btn btn-primary" type="submit">Post a comment</button>
             </div>
         </div>

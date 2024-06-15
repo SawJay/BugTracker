@@ -6,7 +6,7 @@
 
 <div class="card m-3">
     <div class="card-body">
-        <h2 class="pt-2">Attachments:</h2>
+        <h4 class="pt-2">Attachments:</h4>
         <div class="row">
             <AuthorizeView Context="TicketAttachForm">
                 @if (TicketAttachForm.User.IsInRole("Admin") || TicketAttachForm.User.IsInRole("ProjectManager") && userInfo?.UserId == ProjectManager?.Id || userInfo?.UserId == Ticket?.DeveloperUserId || userInfo?.UserId == Ticket?.SubmitterUserId)

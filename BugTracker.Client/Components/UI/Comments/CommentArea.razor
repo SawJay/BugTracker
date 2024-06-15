@@ -6,7 +6,7 @@
 
 <div class="card m-3">
     <div class="card-body">
-        <div class="pt-2 pt-xl-5 col-12 col-md-8" id="comments">
+        <div class="pt-2 pt-xl-2 col-12" id="comments">
             @foreach (TicketCommentDTO comment in comments)
             {
                 <CommentItem TicketId="TicketId" Comment="comment" OnDelete="DeleteComment" OnUpdate="UpdateComment" />

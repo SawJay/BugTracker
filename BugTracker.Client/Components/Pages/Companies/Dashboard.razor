@@ -21,42 +21,48 @@
             </h5>
         </div>
         <div class="row">
-            <div class="card col-12 col-md-4 card-hover mt-4 bg-primary-subtle">
-                <div class="p-2 rounded bg-primary-subtle text-center">
-                    <a href="projects/index" class="text-decoration-none">
-                        <h1 class="fw-light text-primary">@Company?.Projects.Count</h1>
-                        <h5 class="text-primary">Total Projects</h5>
-                    </a>
+            <div class="col-12 col-md-4 mt-4">
+                <div class="card card-hover bg-primary-subtle border-0">
+                    <div class="p-2 rounded bg-primary-subtle text-center">
+                        <a href="projects/index" class="text-decoration-none">
+                            <h1 class="fw-light text-primary">@Company?.Projects.Count</h1>
+                            <h5 class="text-primary">Total Projects</h5>
+                        </a>
+                    </div>
                 </div>
             </div>
-            <div class="card col-12 col-md-4 card-hover mt-4 bg-warning-subtle">
-                <div class="p-2 rounded bg-warning-subtle text-center">
-                    @if (Tickets is not null)
-                    {
-                        <a href="tickets/index" class="text-decoration-none">
-                            <h1 class="fw-light text-warning">@Tickets.Count()</h1>
-                            <h5 class="text-warning">Total Tickets</h5>
-                        </a>
-                    }
+            <div class="col-12 col-md-4 mt-4">
+                <div class="card card-hover bg-warning-subtle border-0">
+                    <div class="p-2 rounded bg-warning-subtle text-center">
+                        @if (Tickets is not null)
+                        {
+                            <a href="tickets/index" class="text-decoration-none">
+                                <h1 class="fw-light text-warning">@Tickets.Count()</h1>
+                                <h5 class="text-warning">Total Tickets</h5>
+                            </a>
+                        }
+                    </div>
                 </div>
             </div>
-            <div class="card col-12 col-md-4 card-hover mt-4 bg-success-subtle">
-                <div class="p-2 rounded bg-success-subtle text-center">
-                    @if (Members is not null)
-                    {
-                        <a href="companies/index" class="text-decoration-none">
-                            <h1 class="fw-light text-success">@Members.Count()</h1>
-                            <h5 class="text-success">Members</h5>
-                        </a>
-                    }
+            <div class="col-12 col-md-4 mt-4">
+                <div class="card card-hover bg-success-subtle border-0">
+                    <div class="p-2 rounded bg-success-subtle text-center">
+                        @if (Members is not null)
+                        {
+                            <a href="companies/index" class="text-decoration-none">
+                                <h1 class="fw-light text-success">@Members.Count()</h1>
+                                <h5 class="text-success">Members</h5>
+                            </a>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
-     
+
         <div class="row">
             <div class="col-md-12 col-lg-4 d-flex align-items-stretch mt-5">
                 <div class="card w-100">
-                    <div class="card-body bg-success-subtle border-0">
+                    <div class="card-body bg-emphasis-subtle">
                         <h5 class="card-title">Members</h5>
                         <div class="table-responsive px-4 py-3">
                             <table class="table table-striped">
@@ -83,7 +89,7 @@
             </div>
             <div class="col-md-12 col-lg-8 d-flex align-items-stretch mt-5">
                 <div class="card w-100">
-                    <div class="card-body bg-primary-subtle border-0">
+                    <div class="card-body border-0">
                         <h5 class="card-title">Projects</h5>
                         <div class="table-responsive px-4 py-3">
                             <table class="table table-striped">
@@ -113,13 +119,12 @@
         </div>
         <div class="col-12 d-flex align-items-stretch mt-5">
             <div class="card w-100">
-                <div class="card-body bg-warning-subtle border-0">
+                <div class="card-body border-0">
                     <h5 class="card-title">Tickets</h5>
                     <div class="table-responsive px-4 py-3">
                         <table class="table table-striped">
                             <thead class="table">
                                 <tr>
-                                    <th>ID</th>
                                     <th>Title</th>
                                     <th class="text-center">Project</th>
                                     <th class="text-center">Priority</th>
